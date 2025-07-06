@@ -116,7 +116,7 @@ export default function EventPage() {
         case "CANCELLED":
           return "bg-red-100 text-red-700"
         default:
-          return "bg-yellow-100 text-yellow-800"
+          return "bg-gray-100 text-gray-700"
       }
     }
 
@@ -133,56 +133,58 @@ export default function EventPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 px-6 py-5 text-gray-800">
-          <h3 className="text-xl font-bold text-orange-900">{event.title}</h3>
-          <p className="line-clamp-3 text-sm text-gray-700">{event.desc}</p>
+        <div className="flex flex-1 flex-col justify-between">
+          <div className="flex flex-col gap-3 px-6 py-5 text-gray-800">
+            <h3 className="text-xl font-bold text-orange-900">{event.title}</h3>
+            <p className="line-clamp-3 text-sm text-gray-700">{event.desc}</p>
 
-          <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
-            {event.eventType.map((type, idx) => (
-              <span
-                key={idx}
-                className="rounded-full bg-orange-100 px-2 py-0.5"
-              >
-                #{type}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-2 flex flex-col gap-1 text-xs font-medium text-gray-600">
-            <div className="flex items-center gap-5">
-              <p>{formatCustomDate(event.date)}</p>
-              <span
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getStatusStyle(event.status)}`}
-              >
-                {event.status}
-              </span>
+            <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
+              {event.eventType.map((type, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-full bg-orange-100 px-2 py-0.5"
+                >
+                  #{type}
+                </span>
+              ))}
             </div>
-            {event.registerLink && (
-              <a
-                href={event.registerLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Register Here
-              </a>
-            )}
-          </div>
-        </div>
 
-        <div className="flex gap-4 border-t border-orange-100 px-6 py-4">
-          <button
-            onClick={() => setEditEvent(event)}
-            className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDeleteEvent(event.id)}
-            className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
-          >
-            Delete
-          </button>
+            <div className="mt-2 flex flex-col gap-1 text-xs font-medium text-gray-600">
+              <div className="flex items-center gap-5">
+                <p>{formatCustomDate(event.date)}</p>
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getStatusStyle(event.status)}`}
+                >
+                  {event.status}
+                </span>
+              </div>
+              {event.registerLink && (
+                <a
+                  href={event.registerLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Register Here
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-auto flex gap-4 border-t border-orange-100 px-6 py-4">
+            <button
+              onClick={() => setEditEvent(event)}
+              className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => onDeleteEvent(event.id)}
+              className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     )

@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id, email, branch, year } = await req.json()
+    const { id, email, branch, year, role, profile_picture } = await req.json()
 
     if (!id) {
       return NextResponse.json({ error: "Missing member ID" }, { status: 400 })
@@ -40,6 +40,8 @@ export async function PUT(req: NextRequest) {
         email,
         branch,
         year,
+        role,
+        profile_picture,
       },
     })
     return NextResponse.json(updatedMember, { status: 200 })

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
+import React from "react"
 import toast from "react-hot-toast"
 
 export default function LoginPage() {
@@ -15,6 +16,29 @@ export default function LoginPage() {
       toast.success("Login successful!")
     }
   }, [searchParams])
+
+  const toastDisplayedRef = React.useRef(false)
+
+  useEffect(() => {
+    const error = searchParams.get("error")
+
+    if (error && !toastDisplayedRef.current) {
+      toastDisplayedRef.current = true // block further toasts
+
+      if (error === "OAuthAccountNotLinked") {
+        toast.error(
+          "This email is already registered. Please log in using your password.",
+        )
+      } else if (error === "AccessDenied") {
+        toast.error("Access denied. Please contact admin.")
+      }
+
+      // Immediately clean URL so toast doesn't repeat on reload
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("error")
+      router.replace(`/login?${params.toString()}`, { scroll: false })
+    }
+  }, [searchParams, router])
 
   const onLogin = async () => {
     setLoad(true)
@@ -58,7 +82,6 @@ export default function LoginPage() {
         </h2>
 
         <div className="space-y-5">
-          {/* Email Input */}
           <div>
             <label
               htmlFor="email"
@@ -76,7 +99,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password Input */}
           <div>
             <label
               htmlFor="password"
@@ -100,7 +122,7 @@ export default function LoginPage() {
             className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 py-2 font-semibold text-white shadow-md transition duration-200 hover:from-orange-600 hover:to-red-600 disabled:opacity-60"
             onClick={onLogin}
           >
-            {load ? "Processing..." : "Login"}
+            {load ? "Processing" : "Login"}
           </button>
 
           {/* Divider */}
@@ -118,9 +140,16 @@ export default function LoginPage() {
             onClick={() =>
               signIn("google", { callbackUrl: "/admin?login=success" })
             }
-            className="w-full rounded-xl bg-red-600 py-2 font-semibold text-white shadow-md transition duration-200 hover:bg-red-700"
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-red-600 py-2 font-semibold text-white shadow-md transition duration-200 hover:bg-red-700"
           >
-            Sign in with Google
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google Logo"
+              width={22}
+              height={22}
+              className="rounded-full bg-white p-0.5"
+            />
+            <span>Sign in with Google</span>
           </button>
 
           {/* GitHub Login */}
@@ -128,9 +157,16 @@ export default function LoginPage() {
             onClick={() =>
               signIn("github", { callbackUrl: "/admin?login=success" })
             }
-            className="w-full rounded-xl bg-gray-900 py-2 font-semibold text-white shadow-md transition duration-200 hover:bg-gray-800"
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-gray-900 py-2 font-semibold text-white shadow-md transition duration-200 hover:bg-gray-800"
           >
-            Sign in with GitHub
+            <img
+              src="https://www.svgrepo.com/show/512317/github-142.svg"
+              alt="GitHub Logo"
+              width={22}
+              height={22}
+              className="rounded-full bg-white p-0.5"
+            />
+            <span>Sign in with GitHub</span>
           </button>
         </div>
       </div>

@@ -23,6 +23,14 @@ interface Blog {
   publishedAt: string
 }
 
+// Ye pagination ka main logic hai:
+// 1. 'blogsPerPage' fix kar diye hai (e.g., 6 blogs per page)
+// 2. 'currentPage' state se pata chalta hai ki user kis page pe hai
+// 3. 'filteredBlogs' search ke hisaab se blogs filter karta hai
+// 4. 'totalPages' batata hai kitne total pages banenge (Math.ceil se round up)
+// 5. 'paginatedBlogs' slice karta hai sirf current page ke blogs show karne ke liye
+// 6. Prev/Next ya Page buttons se currentPage change hota hai aur naya page dikhta hai
+
 export default function BlogPage() {
   const router = useRouter()
 
@@ -32,6 +40,10 @@ export default function BlogPage() {
   const [publishDate, setPublishDate] = React.useState(false)
 
   const [search, setSearch] = useState("")
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const blogsPerPage = 6
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -44,6 +56,11 @@ export default function BlogPage() {
     }
     fetchEvents()
   }, [])
+
+  // Scroll to top when changing page
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [currentPage])
 
   useEffect(() => {
     const isModalOpen = !!addBlog || !!editBlog
@@ -58,6 +75,20 @@ export default function BlogPage() {
       document.body.style.overflow = "auto"
     }
   }, [addBlog, editBlog])
+
+  // Update total pages when blogs or search changes
+  // manlo ki second page pr ek blog hai and mai vo delete kar deta hu, to currentPage 2 pr hai but total pages 1 ho gye hai
+  // to mujhe currentPage ko 1 pr set karna padega, agar currentPage > totalPages to currentPage ko set kar do 1 pr
+  useEffect(() => {
+    const newTotalPages = Math.ceil(
+      blogs.filter((e) => e.title.toLowerCase().includes(search.toLowerCase()))
+        .length / blogsPerPage,
+    )
+
+    if (currentPage > newTotalPages) {
+      setCurrentPage(newTotalPages || 1)
+    }
+  }, [blogs, search])
 
   const onDeleteBlog = async (blogId: string) => {
     try {
@@ -134,29 +165,31 @@ export default function BlogPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 px-6 py-5">
-          <h3 className="line-clamp-2 text-lg font-bold text-orange-900">
-            {blog.title}
-          </h3>
-          <p className="line-clamp-3 text-sm text-gray-700">{blog.desc}</p>
+        <div className="flex flex-1 flex-col justify-between px-6 py-5">
+          <div className="flex flex-col gap-3">
+            <h3 className="line-clamp-2 text-lg font-bold text-orange-900">
+              {blog.title}
+            </h3>
+            <p className="line-clamp-3 text-sm text-gray-700">{blog.desc}</p>
 
-          <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
-            {blog.tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="rounded-full bg-orange-100 px-2 py-0.5"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
+            <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
+              {blog.tags.map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-full bg-orange-100 px-2 py-0.5"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
 
-          <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
-            {blog.author && <span>👤 {blog.author}</span>}
-            <span>📌 Status: {blog.status}</span>
-            {blog.publishedAt && (
-              <span>📅 {formatCustomDate(blog.publishedAt)}</span>
-            )}
+            <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
+              {blog.author && <span>👤 {blog.author}</span>}
+              <span>📌 Status: {blog.status}</span>
+              {blog.publishedAt && (
+                <span>📅 {formatCustomDate(blog.publishedAt)}</span>
+              )}
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap justify-start gap-3">
@@ -187,6 +220,15 @@ export default function BlogPage() {
     )
   }
 
+  const filteredBlogs = blogs.filter((e) =>
+    e.title.toLowerCase().includes(search.toLowerCase()),
+  )
+  const totalPages = Math.ceil(filteredBlogs.length / blogsPerPage)
+  const paginatedBlogs = filteredBlogs.slice(
+    (currentPage - 1) * blogsPerPage, // start index of the blog on current page
+    currentPage * blogsPerPage, // end index of the blog on current page
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
       <div className="mx-auto w-full max-w-6xl">
@@ -215,19 +257,46 @@ export default function BlogPage() {
               type="text"
               name="search"
               placeholder="Search by title"
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setCurrentPage(1)
+              }}
               className="w-full rounded-md border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
         </div>
 
+        {/* paginatedBlogs already contains only the blogs for the current page (handled by pagination logic) */}
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {blogs
-            .filter((e) => e.title.toLowerCase().includes(search.toLowerCase()))
-            .map((blog: Blog) => (
-              <Card key={blog.id} blog={blog} />
-            ))}
+          {paginatedBlogs.map((blog: Blog) => (
+            <Card key={blog.id} blog={blog} />
+          ))}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="rounded bg-orange-400 px-4 py-2 text-white disabled:bg-gray-300"
+            >
+              Prev
+            </button>
+            <span className="text-sm font-medium text-orange-800">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))
+              }
+              disabled={currentPage === totalPages}
+              className="rounded bg-orange-400 px-4 py-2 text-white disabled:bg-gray-300"
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {addBlog && (
           <AddBlogModal

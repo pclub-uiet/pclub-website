@@ -20,7 +20,8 @@ export default function EditEventModal({ event, onClose, onEdit }: any) {
     eventType: event.eventType,
     status: event.status,
     speaker: event.speaker,
-    date: event.date,
+    bannerImage: event.bannerImage,
+    date: event.date ? event.date.split("T")[0] : "",
     location: event.location,
   })
 
@@ -66,6 +67,44 @@ export default function EditEventModal({ event, onClose, onEdit }: any) {
       console.error("Edit Event Error:", error)
     } finally {
       setLoad(false)
+    }
+  }
+
+  const [uploadingImage, setUploadingImage] = React.useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+
+    const formDataUpload = new FormData()
+    formDataUpload.append("file", file)
+    formDataUpload.append("upload_preset", "Pclubwebsite")
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/da9v08yg8/image/upload",
+        {
+          method: "POST",
+          body: formDataUpload,
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok || !data.secure_url) {
+        alert(
+          "Image upload failed: " + (data.error?.message || "Unknown error"),
+        )
+        return
+      }
+
+      setFormData((prev) => ({ ...prev, bannerImage: data.secure_url }))
+    } catch (err) {
+      alert("Failed to upload image")
+      console.error("Cloudinary upload error:", err)
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -143,6 +182,28 @@ export default function EditEventModal({ event, onClose, onEdit }: any) {
               onChange={handleChange}
               className="w-full rounded-md border border-orange-600 px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+
+            <div>
+              <label className="mb-2 block font-medium text-gray-600">
+                Upload Banner Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="block w-full cursor-pointer rounded-lg border border-orange-600 bg-white p-2 text-sm text-gray-700 shadow-sm"
+              />
+              {uploadingImage && (
+                <p className="mt-2 text-sm text-blue-500">Uploading...</p>
+              )}
+              {formData.bannerImage && (
+                <img
+                  src={formData.bannerImage}
+                  alt="Banner"
+                  className="mt-3 max-h-60 w-full rounded-lg border border-gray-300 object-contain"
+                />
+              )}
+            </div>
 
             <input
               type="date"

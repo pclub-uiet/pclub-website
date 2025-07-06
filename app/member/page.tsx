@@ -76,63 +76,65 @@ export default function MemberPage() {
   const Card: React.FC<{ member: Member }> = ({ member }) => {
     return (
       <div className="group flex flex-col overflow-hidden rounded-3xl border border-orange-200 bg-white shadow-xl ring-1 ring-orange-100 backdrop-blur-md transition-all duration-300 hover:scale-[1.02]">
-        <div className="flex flex-col items-center px-6 py-8 text-center">
-          {member.profile_picture && (
-            <Image
-              src={member.profile_picture}
-              alt={`${member.name}'s profile`}
-              width={100}
-              height={100}
-              className="h-24 w-24 rounded-full border-2 border-orange-500 object-cover shadow-md"
-            />
-          )}
-          <div className="space-y-1 text-sm text-gray-700">
-            <p className="text-lg font-semibold text-orange-900">
-              {member.name}
-            </p>
-            <p>{member.roll_no}</p>
-            <p>{member.email}</p>
-            <p>
-              {member.branch} - Year {member.year}
-            </p>
-          </div>
-          <div className="mt-4 flex gap-5 text-xl">
-            {member.socials.linkedin && (
-              <a
-                href={member.socials.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#0A66C2] hover:opacity-80"
-              >
-                <FontAwesomeIcon icon={faLinkedin} />
-              </a>
+        <div className="flex flex-1 flex-col justify-between">
+          <div className="flex flex-col items-center px-6 py-8 text-center">
+            {member.profile_picture && (
+              <Image
+                src={member.profile_picture}
+                alt={`${member.name}'s profile`}
+                width={100}
+                height={100}
+                className="h-24 w-24 rounded-full border-2 border-orange-500 object-cover shadow-md"
+              />
             )}
-            {member.socials.github && (
-              <a
-                href={member.socials.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-black hover:opacity-80"
-              >
-                <FontAwesomeIcon icon={faGithub} />
-              </a>
-            )}
+            <div className="space-y-1 text-sm text-gray-700">
+              <p className="text-lg font-semibold text-orange-900">
+                {member.name}
+              </p>
+              <p>{member.roll_no}</p>
+              <p>{member.email}</p>
+              <p>
+                {member.branch} - Year {member.year}
+              </p>
+            </div>
+            <div className="mt-4 flex gap-5 text-xl">
+              {member.socials.linkedin && (
+                <a
+                  href={member.socials.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#0A66C2] hover:opacity-80"
+                >
+                  <FontAwesomeIcon icon={faLinkedin} />
+                </a>
+              )}
+              {member.socials.github && (
+                <a
+                  href={member.socials.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-black hover:opacity-80"
+                >
+                  <FontAwesomeIcon icon={faGithub} />
+                </a>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-center gap-4 border-t border-orange-100 px-6 pb-4">
-          <button
-            className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
-            onClick={() => setEditMember(member)}
-          >
-            Edit
-          </button>
-          <button
-            className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
-            onClick={() => onDeleteMember(member.id)}
-          >
-            Delete
-          </button>
+          <div className="mt-auto flex justify-center gap-4 border-t border-orange-100 px-6 pb-4">
+            <button
+              className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
+              onClick={() => setEditMember(member)}
+            >
+              Edit
+            </button>
+            <button
+              className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
+              onClick={() => onDeleteMember(member.id)}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     )

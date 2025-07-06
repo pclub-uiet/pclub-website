@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import axios from "axios"
 import toast from "react-hot-toast"
 import { NextResponse, NextRequest } from "next/server"
+import { signOut } from "next-auth/react"
 
 type User = {
   id: string
@@ -56,11 +57,17 @@ export default function AdminPage() {
   const onRejectUser = async (id: string) => {
     try {
       await axios.put("/api/admin/reject_user", { id })
-      toast.error("User rejected")
+      toast.success("User rejected")
       fetchData() // After we approve or reject a user, our backend (database) changes, hence reload the latest user list
     } catch (error: any) {
       console.log(error.message)
     }
+  }
+
+  const handleLogout = async () => {
+    await signOut({
+      callbackUrl: "/login", // after logout, redirect to login page
+    })
   }
 
   const Card: React.FC<{ user: User; actions?: boolean }> = ({
@@ -118,6 +125,15 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
       <div className="mx-auto w-full max-w-6xl space-y-16">
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={handleLogout}
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
+
         <section>
           <h2 className="mb-6 border-l-4 border-orange-400 pl-4 text-3xl font-bold tracking-tight text-orange-900">
             Pending Requests

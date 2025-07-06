@@ -12,6 +12,8 @@ export default function EditMemberModal({ member, onClose, onEdit }: any) {
     email: member.email,
     branch: member.branch,
     year: member.year,
+    role: member.role,
+    profile_picture: member.profile_picture,
   })
 
   // e is the event triggered when a user types something into an <input> field
@@ -54,6 +56,44 @@ export default function EditMemberModal({ member, onClose, onEdit }: any) {
       console.error(error)
     } finally {
       setLoad(false)
+    }
+  }
+
+  const [uploadingImage, setUploadingImage] = React.useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+
+    const formDataUpload = new FormData()
+    formDataUpload.append("file", file)
+    formDataUpload.append("upload_preset", "Pclubwebsite")
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/da9v08yg8/image/upload",
+        {
+          method: "POST",
+          body: formDataUpload,
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok || !data.secure_url) {
+        alert(
+          "Image upload failed: " + (data.error?.message || "Unknown error"),
+        )
+        return
+      }
+
+      setFormData((prev) => ({ ...prev, profile_picture: data.secure_url }))
+    } catch (err) {
+      alert("Failed to upload image")
+      console.error("Cloudinary upload error:", err)
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -101,6 +141,37 @@ export default function EditMemberModal({ member, onClose, onEdit }: any) {
               onChange={handleChange}
               className="w-full rounded-md border border-orange-600 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+
+            <input
+              type="text"
+              placeholder="President, Core, Member, Team Lead"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full rounded-md border border-orange-600 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div>
+              <label className="mb-2 block font-medium text-gray-600">
+                Upload Profile Picture
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="block w-full cursor-pointer rounded-lg border border-orange-600 bg-white p-2 text-sm text-gray-700 shadow-sm"
+              />
+              {uploadingImage && (
+                <p className="mt-2 text-sm text-blue-500">Uploading...</p>
+              )}
+              {formData.profile_picture && (
+                <img
+                  src={formData.profile_picture}
+                  alt="Profile"
+                  className="mt-3 max-h-60 w-full rounded-lg border border-gray-300 object-contain"
+                />
+              )}
+            </div>
 
             {load ? (
               <div className="flex justify-center">
