@@ -88,9 +88,9 @@ model Member {
   branch          String
   year            Int
   socials         Json     // for key-value pairs
-  profile_picture String?   // Image URL
+  profile_picture String? // Image URL
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt   // Auto-updated on changes
+  updatedAt       DateTime @updatedAt // Auto-updated on changes
 }
 
 model Event {
@@ -119,15 +119,16 @@ enum Status {
 model Blog {
   id          String     @id @default(cuid())
   title       String
-  desc        String    // show this at admin page
-  content     String   // show at public blog page, not on admin
+  desc        String     // show this at admin page
+  content     String    // show at public blog page, not on admin
   coverImage  String?
   tags        String[]    // e.g.- ai, ml, webd, ui/ux, data science
   author      String?
   status      BlogStatus @default(DRAFT)
+  source      String     @default("manual")   // manual or automated via n8n
   publishedAt DateTime?   // set this when status = PUBLISHED
   createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt  
+  updatedAt   DateTime   @updatedAt
 }
 
 enum BlogStatus {
@@ -137,13 +138,23 @@ enum BlogStatus {
 
 model Project {
   id           String   @id @default(cuid())
-  title        String   
-  desc         String   
-  repolink     String   
-  livelink     String?   
-  contributors String[]     // array of contributor names 
-  techstack    String[]     
-  image        String?      // project image
-  createdAt    DateTime @default(now()) 
-  updatedAt    DateTime @updatedAt 
+  title        String
+  desc         String
+  repolink     String
+  livelink     String?
+  contributors String[]   // array of contributor names 
+  techstack    String[]
+  image        String?   // project image
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+model Subscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  token        String   @unique
+  isVerified   Boolean  @default(false)
+  verifiedAt   DateTime?
+  createdAt    DateTime @default(now())
 }

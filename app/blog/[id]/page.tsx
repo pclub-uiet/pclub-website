@@ -10,7 +10,7 @@ import { faLinkedin } from "@fortawesome/free-brands-svg-icons"
 import { faTwitter } from "@fortawesome/free-brands-svg-icons"
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons"
 import { faPenNib } from "@fortawesome/free-solid-svg-icons"
-import { faCalendar } from "@fortawesome/free-solid-svg-icons"
+import { faCalendarDays } from "@fortawesome/free-solid-svg-icons"
 import { faBookOpen } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 
@@ -68,27 +68,26 @@ export default function BlogDetailPage() {
   return (
     <div className="min-h-screen bg-[#141629] px-6 py-12 text-gray-200">
       <div className="mx-auto max-w-4xl animate-fade-in space-y-10">
-        {/* Meta Info + Tags */}
-        <div className="flex flex-col justify-between gap-4 text-sm text-gray-400 sm:flex-row sm:items-center">
-          <div className="space-x-4">
-            <span>
-              <FontAwesomeIcon icon={faPenNib} className="mr-1 text-pink-400" />
-              {blogs.author}
-            </span>
-            <span>
-              <FontAwesomeIcon
-                icon={faCalendar}
-                className="mr-1 text-purple-400"
-              />
-              {new Date(blogs.publishedAt).toDateString()}
-            </span>
-            <span className="italic text-gray-500">
-              <FontAwesomeIcon
-                icon={faBookOpen}
-                className="mr-1 text-indigo-400"
-              />
-              {getReadingTime(blogs.content)}
-            </span>
+        {/* Enhanced Top Section */}
+        <div className="flex flex-col gap-4 text-sm text-gray-400 sm:flex-row sm:items-center sm:justify-between">
+          {/* Author + Date + Read Time */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 text-pink-400">
+              <FontAwesomeIcon icon={faPenNib} />
+              <span className="font-medium text-gray-300">{blogs.author}</span>
+            </div>
+            <div className="flex items-center gap-2 text-purple-400">
+              <FontAwesomeIcon icon={faCalendarDays} />
+              <span className="font-medium text-gray-300">
+                {new Date(blogs.publishedAt).toDateString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-indigo-400">
+              <FontAwesomeIcon icon={faBookOpen} />
+              <span className="font-medium text-gray-300">
+                {getReadingTime(blogs.content)}
+              </span>
+            </div>
           </div>
 
           {/* Tags */}
@@ -96,7 +95,7 @@ export default function BlogDetailPage() {
             {blogs.tags.map((tag, idx) => (
               <span
                 key={idx}
-                className="rounded-full bg-purple-800/20 px-3 py-1 text-xs font-medium text-purple-200"
+                className="rounded-full border border-purple-500 bg-purple-800/20 px-3 py-1 text-xs font-medium text-purple-200 shadow-sm transition hover:shadow-[0_0_10px_2px_rgba(168,85,247,0.5)]"
               >
                 #{tag}
               </span>
@@ -104,12 +103,11 @@ export default function BlogDetailPage() {
           </div>
         </div>
 
-        {/* Title */}
-        <h2 className="bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-center text-4xl font-extrabold tracking-tight text-transparent drop-shadow-lg">
+        <h2 className="relative mb-6 text-center text-3xl font-semibold tracking-tight text-indigo-100 sm:text-4xl">
           {blogs.title}
+          <span className="mx-auto mt-2 block h-1 w-24 rounded bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 opacity-80"></span>
         </h2>
 
-        {/* Cover Image */}
         {blogs.coverImage && (
           <div className="relative h-72 w-full overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-md">
             <Image
@@ -121,72 +119,81 @@ export default function BlogDetailPage() {
           </div>
         )}
 
-        {/* Overview */}
         <div className="space-y-2">
-          <h3 className="text-xl font-semibold text-white">Overview</h3>
-          <p className="animate-fade-up leading-relaxed text-gray-300">
+          <h3 className="inline-block border-b-2 border-orange-400 pb-1 text-2xl font-bold text-white">
+            Overview
+          </h3>
+          <p className="animate-fade-up text-justify leading-relaxed tracking-wide text-gray-300">
             {blogs.desc}
           </p>
         </div>
 
         {/* Content */}
         <div className="space-y-2">
-          <h3 className="text-xl font-semibold text-white">Content</h3>
-          <article className="prose prose-invert prose-lg max-w-none animate-fade-up text-gray-300">
+          <h3 className="inline-block border-b-2 border-orange-400 pb-1 text-2xl font-bold text-white">
+            Content
+          </h3>
+          <article className="prose prose-lg prose-invert max-w-none animate-fade-up leading-relaxed tracking-wide text-gray-300">
             <p className="whitespace-pre-line">{blogs.content}</p>
           </article>
         </div>
 
         {/* Share */}
-        <div className="mt-5 flex">
-          <span className="mr-4 block text-sm font-semibold text-gray-400">
+        <div className="mt-10 border-t border-white/10 pt-6">
+          <h4 className="mb-3 text-sm font-semibold tracking-wider text-gray-400">
             Share this blog
-          </span>
-          <div className="flex gap-4 text-lg text-pink-500">
+          </h4>
+          <div className="flex flex-wrap gap-4 text-xl">
             <a
               href={`https://www.instagram.com/?url=${encodeURIComponent(shareUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
               title="Share on Instagram"
-              className="transition hover:text-pink-500"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-pink-400 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
               <FontAwesomeIcon icon={faInstagram} />
+              <span className="text-sm font-medium">Instagram</span>
             </a>
+
             <a
               href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
               title="Share on LinkedIn"
-              className="transition hover:text-blue-500"
+              className="flex items-center gap-2 rounded-full bg-blue-700 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
               <FontAwesomeIcon icon={faLinkedin} />
+              <span className="text-sm font-medium">LinkedIn</span>
             </a>
+
             <a
               href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(blogs.title)}`}
               target="_blank"
               rel="noopener noreferrer"
               title="Share on Twitter"
-              className="transition hover:text-sky-500"
+              className="flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
               <FontAwesomeIcon icon={faTwitter} />
+              <span className="text-sm font-medium">Twitter</span>
             </a>
+
             <a
               href={`https://wa.me/?text=${encodeURIComponent(blogs.title + " " + shareUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
               title="Share on WhatsApp"
-              className="transition hover:text-green-500"
+              className="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
               <FontAwesomeIcon icon={faWhatsapp} />
+              <span className="text-sm font-medium">WhatsApp</span>
             </a>
           </div>
         </div>
 
-        {/* Back Button */}
         <div className="pt-6 text-center">
           <Link
-            href="/blogPage"
-            className="inline-block rounded-full bg-white/10 px-5 py-2 text-sm font-medium text-white shadow-md transition-all hover:bg-white/20 hover:shadow-lg"
+            href="/blog"
+            className="mt-6 inline-block rounded-full bg-white/10 px-6 py-2 text-sm font-medium text-white shadow-md transition-all hover:bg-white/20 hover:shadow-lg"
           >
             ← Back to Blogs
           </Link>

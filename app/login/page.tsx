@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import React from "react"
 import toast from "react-hot-toast"
+import Link from "next/link"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -125,7 +126,6 @@ export default function LoginPage() {
             {load ? "Processing" : "Login"}
           </button>
 
-          {/* Divider */}
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-orange-300"></div>
@@ -168,6 +168,13 @@ export default function LoginPage() {
             />
             <span>Sign in with GitHub</span>
           </button>
+
+          <p className="text-center text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link href="/signup" className="text-orange-600 hover:underline">
+              Signup
+            </Link>
+          </p>
         </div>
       </div>
     </div>

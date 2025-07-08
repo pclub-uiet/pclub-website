@@ -44,6 +44,14 @@ const routeList: RouteProps[] = [
     href: "#sessions",
     label: "Upcoming Sessions",
   },
+  {
+    href: "/admin",
+    label: "Admin",
+  },
+  {
+    href: "/blog",
+    label: "Blogs",
+  },
 ]
 
 const domainList: DomainProps[] = [

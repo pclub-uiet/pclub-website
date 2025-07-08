@@ -22,7 +22,7 @@ export default withAuth(
         }
 
         // Protect these routes
-        const protectedPaths = ["/admin", "/event", "/member", "/blog", "/project"];
+        const protectedPaths = ["/admin", "/admin/event", "/admin/member", "/admin/blog", "/admin/project"];
         if (protectedPaths.includes(pathname)) {
           if (!token) return false;
           if (!token.approved) return false;
@@ -36,5 +36,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin", "/event", "/member", "/blog", "/project"],
+  matcher: ["/admin", "/admin/event", "/admin/member", "/admin/blog", "/admin/project"],
 };

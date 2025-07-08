@@ -3,11 +3,8 @@ import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 import axios from "axios"
-import { NextResponse, NextRequest } from "next/server"
 import Image from "next/image"
 import Link from "next/link"
-import AddBlogModal from "@/components/ui/AddBlogModal"
-import EditBlogModal from "@/components/ui/EditBlogModal"
 
 type BlogStatus = "DRAFT" | "PUBLISHED"
 
@@ -23,295 +20,162 @@ interface Blog {
   publishedAt: string
 }
 
-// Ye pagination ka main logic hai:
-// 1. 'blogsPerPage' fix kar diye hai (e.g., 6 blogs per page)
-// 2. 'currentPage' state se pata chalta hai ki user kis page pe hai
-// 3. 'filteredBlogs' search ke hisaab se blogs filter karta hai
-// 4. 'totalPages' batata hai kitne total pages banenge (Math.ceil se round up)
-// 5. 'paginatedBlogs' slice karta hai sirf current page ke blogs show karne ke liye
-// 6. Prev/Next ya Page buttons se currentPage change hota hai aur naya page dikhta hai
-
 export default function BlogPage() {
   const router = useRouter()
-
-  const [blogs, setBlogs] = React.useState<Blog[]>([])
-  const [addBlog, setAddBlog] = React.useState<Blog | null>(null)
-  const [editBlog, setEditBlog] = React.useState<Blog | null>(null)
-  const [publishDate, setPublishDate] = React.useState(false)
-
-  const [search, setSearch] = useState("")
-
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const blogsPerPage = 6
+  const [publishedBlogs, setPublishedBlogs] = useState<Blog[]>([])
+  const [selectedTag, setSelectedTag] = useState<string>("All")
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchBlogs = async () => {
       try {
-        const res = await axios.get("/api/blog/getBlog")
-        setBlogs(res.data)
+        const res = await axios.get("/api/blog/getPublishedBlogs")
+        setPublishedBlogs(res.data)
       } catch (error: any) {
-        toast.error("Failed to fetch blogs")
+        console.log(error.message)
+        toast.error("Failed to fetch published blogs")
       }
     }
-    fetchEvents()
+    fetchBlogs()
   }, [])
 
-  // Scroll to top when changing page
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }, [currentPage])
+  const filteredBlogs = publishedBlogs.filter(
+    (blog) => selectedTag === "All" || blog.tags.includes(selectedTag),
+  )
 
-  useEffect(() => {
-    const isModalOpen = !!addBlog || !!editBlog
+  const [email, setEmail] = useState<string>("")
+  const [loading, setLoading] = useState<boolean>(false)
+  const [message, setMessage] = useState<string>("")
 
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = "auto"
-    }
-
-    return () => {
-      document.body.style.overflow = "auto"
-    }
-  }, [addBlog, editBlog])
-
-  // Update total pages when blogs or search changes
-  // manlo ki second page pr ek blog hai and mai vo delete kar deta hu, to currentPage 2 pr hai but total pages 1 ho gye hai
-  // to mujhe currentPage ko 1 pr set karna padega, agar currentPage > totalPages to currentPage ko set kar do 1 pr
-  useEffect(() => {
-    const newTotalPages = Math.ceil(
-      blogs.filter((e) => e.title.toLowerCase().includes(search.toLowerCase()))
-        .length / blogsPerPage,
-    )
-
-    if (currentPage > newTotalPages) {
-      setCurrentPage(newTotalPages || 1)
-    }
-  }, [blogs, search])
-
-  const onDeleteBlog = async (blogId: string) => {
+  const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage("")
     try {
-      const deletedBlog = await axios.delete("/api/blog/deleteBlog", {
-        data: { id: blogId },
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       })
-      toast.success("Blog deleted successfully")
-      setBlogs((prev) => prev.filter((m) => m.id !== blogId))
-    } catch (error: any) {
-      console.log(error.message)
-      toast.error("Failed to delete blog")
+      const data = await res.json()
+      setMessage(data.msg || "Something went wrong.")
+      if (res.ok) setEmail("")
+    } catch (error) {
+      setMessage("Subscription failed. Try again.")
     }
-  }
-
-  const changeStatus = async (blog: Blog) => {
-    try {
-      setPublishDate(true)
-      const res = await axios.put("/api/blog/updateStatus", {
-        id: blog.id,
-        status: "PUBLISHED",
-        publishedAt: new Date().toISOString(),
-      })
-      const updated = res.data as Blog
-      setBlogs((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
-      toast.success("Blog successfully published")
-    } catch (error: any) {
-      toast.error("Failed to publish blog")
-      console.log(error.message)
-    }
-  }
-
-  const handleAddBlog = async (newBlog: Blog) => {
-    setBlogs((prev) => [...prev, newBlog])
-  }
-
-  const handleEditBlog = async (updatedBlog: Blog) => {
-    setBlogs((prev) =>
-      prev.map((e) => (e.id === updatedBlog.id ? updatedBlog : e)),
-    )
-  }
-
-  const formatCustomDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const day = date.getDate()
-    const monthName = date.toLocaleString("en-US", { month: "long" })
-    const year = date.getFullYear()
-    const getDaySuffix = (d: number) => {
-      if (d >= 11 && d <= 13) return "th"
-      switch (d % 10) {
-        case 1:
-          return "st"
-        case 2:
-          return "nd"
-        case 3:
-          return "rd"
-        default:
-          return "th"
-      }
-    }
-    return `${day}${getDaySuffix(day)} ${monthName}, ${year}`
+    setLoading(false)
   }
 
   const Card: React.FC<{ blog: Blog }> = ({ blog }) => {
     return (
-      <div className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-orange-100 backdrop-blur-md transition-all duration-300 hover:scale-[1.015]">
+      <div className="group flex min-h-[400px] flex-col justify-between overflow-hidden rounded-2xl border border-[#5a3c88] bg-[#2b223d] shadow-md transition-all duration-300 hover:shadow-lg">
         {blog.coverImage && (
           <div className="relative h-48 w-full">
             <Image
               src={blog.coverImage}
-              alt={`${blog.title} image`}
+              alt={`${blog.title} cover image`}
               fill
               className="object-cover"
             />
           </div>
         )}
 
-        <div className="flex flex-1 flex-col justify-between px-6 py-5">
-          <div className="flex flex-col gap-3">
-            <h3 className="line-clamp-2 text-lg font-bold text-orange-900">
+        <div className="flex flex-1 flex-col justify-between gap-3 p-5">
+          <div className="space-y-2">
+            <h3 className="line-clamp-2 text-xl font-bold text-white">
               {blog.title}
             </h3>
-            <p className="line-clamp-3 text-sm text-gray-700">{blog.desc}</p>
+            <p className="line-clamp-3 text-sm text-gray-300">{blog.desc}</p>
 
-            <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
-              {blog.tags.map((tag, idx) => (
+            <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium">
+              {blog.tags.map((tag, index) => (
                 <span
-                  key={idx}
-                  className="rounded-full bg-orange-100 px-2 py-0.5"
+                  key={index}
+                  className="rounded-full bg-purple-800/20 px-2 py-0.5 text-purple-200"
                 >
                   #{tag}
                 </span>
               ))}
             </div>
-
-            <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
-              {blog.author && <span>👤 {blog.author}</span>}
-              <span>📌 Status: {blog.status}</span>
-              {blog.publishedAt && (
-                <span>📅 {formatCustomDate(blog.publishedAt)}</span>
-              )}
-            </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap justify-start gap-3">
-            {blog.status === "DRAFT" && (
-              <button
-                onClick={() => changeStatus(blog)}
-                disabled={publishDate}
-                className="rounded-full bg-green-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-green-600"
-              >
-                Publish
-              </button>
-            )}
-            <button
-              onClick={() => setEditBlog(blog)}
-              className="rounded-full bg-blue-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-600"
+          <div className="mt-auto pt-2">
+            <Link
+              href={`/blog/${blog.id}`}
+              className="inline-block text-sm font-semibold text-pink-400 transition-all hover:underline"
             >
-              Edit
-            </button>
-            <button
-              onClick={() => onDeleteBlog(blog.id)}
-              className="rounded-full bg-red-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-600"
-            >
-              Delete
-            </button>
+              Read more →
+            </Link>
           </div>
         </div>
       </div>
     )
   }
 
-  const filteredBlogs = blogs.filter((e) =>
-    e.title.toLowerCase().includes(search.toLowerCase()),
-  )
-  const totalPages = Math.ceil(filteredBlogs.length / blogsPerPage)
-  const paginatedBlogs = filteredBlogs.slice(
-    (currentPage - 1) * blogsPerPage, // start index of the blog on current page
-    currentPage * blogsPerPage, // end index of the blog on current page
-  )
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-10 flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <button
-            onClick={() =>
-              setAddBlog({
-                id: "",
-                title: "",
-                content: "",
-                desc: "",
-                coverImage: "",
-                tags: [],
-                author: "",
-                status: "DRAFT",
-                publishedAt: "",
-              })
-            }
-            className="rounded-lg bg-orange-500 px-6 py-3 text-white shadow-md transition hover:bg-orange-600"
-          >
-            Add Blog
-          </button>
+    <div className="min-h-screen bg-[#141629] px-6 py-12">
+      <div className="mx-auto flex max-w-6xl flex-col items-center">
+        <h2 className="mb-3 animate-fade-in bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-center text-4xl font-extrabold text-transparent">
+          Our Blogs
+        </h2>
 
-          <div className="w-full sm:w-1/2">
-            <input
-              type="text"
-              name="search"
-              placeholder="Search by title"
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setCurrentPage(1)
-              }}
-              className="w-full rounded-md border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
-          </div>
+        <p className="mb-8 max-w-2xl animate-fade-in text-center text-gray-300 delay-100">
+          Discover our latest insights and creative explorations in technology,
+          design, and AI.
+        </p>
+
+        {/* Subscribe Form */}
+        <form
+          onSubmit={handleSubscribe}
+          className="mb-10 flex w-full max-w-xl animate-fade-in gap-3 delay-200"
+        >
+          <input
+            type="email"
+            placeholder="Enter your email"
+            name="subscribe"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="flex-1 rounded-lg border border-gray-700 bg-white/10 px-4 py-3 text-sm text-white placeholder-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-400"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:brightness-110 disabled:opacity-60"
+          >
+            Subscribe
+          </button>
+        </form>
+
+        {message && (
+          <p className="mb-6 text-center text-sm text-pink-300">{message}</p>
+        )}
+
+        <div className="mb-10 flex animate-fade-in flex-wrap justify-center gap-3 delay-300">
+          {["All", "AI", "ML", "WebDev", "Data Science"].map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setSelectedTag(tag)}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                selectedTag === tag
+                  ? "border-transparent bg-gradient-to-r from-pink-500 to-indigo-500 text-white shadow-md"
+                  : "border-gray-700 bg-white/10 text-white hover:bg-white/20"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
 
-        {/* paginatedBlogs already contains only the blogs for the current page (handled by pagination logic) */}
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {paginatedBlogs.map((blog: Blog) => (
+        <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredBlogs.map((blog: Blog) => (
             <Card key={blog.id} blog={blog} />
           ))}
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="rounded bg-orange-400 px-4 py-2 text-white disabled:bg-gray-300"
-            >
-              Prev
-            </button>
-            <span className="text-sm font-medium text-orange-800">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))
-              }
-              disabled={currentPage === totalPages}
-              className="rounded bg-orange-400 px-4 py-2 text-white disabled:bg-gray-300"
-            >
-              Next
-            </button>
-          </div>
-        )}
-
-        {addBlog && (
-          <AddBlogModal
-            blog={addBlog}
-            onClose={() => setAddBlog(null)}
-            onAdd={handleAddBlog}
-          />
-        )}
-
-        {editBlog && (
-          <EditBlogModal
-            blog={editBlog}
-            onClose={() => setEditBlog(null)}
-            onEdit={handleEditBlog}
-          />
+        {filteredBlogs.length === 0 && (
+          <p className="mt-10 text-center text-gray-400">
+            No blogs found for this tag.
+          </p>
         )}
       </div>
     </div>

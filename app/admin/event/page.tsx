@@ -191,9 +191,8 @@ export default function EventPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fdf3ef] to-[#e7dbdc] px-6 py-16">
-      <div className="mx-auto max-w-7xl">
-        {/* Top Controls: Add + Search */}
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
+      <div className="mx-auto w-full max-w-6xl">
         <div className="mb-10 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <button
             onClick={() =>
@@ -212,7 +211,7 @@ export default function EventPage() {
                 location: "",
               })
             }
-            className="rounded-lg bg-[#ec684a] px-6 py-3 text-white shadow-md transition hover:bg-[#d65732]"
+            className="rounded-lg bg-orange-500 px-6 py-3 text-white shadow-md transition hover:bg-orange-600"
           >
             Add Event
           </button>

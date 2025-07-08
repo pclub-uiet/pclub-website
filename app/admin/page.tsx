@@ -123,12 +123,15 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-50 px-6 pb-12 pt-5">
       <div className="mx-auto w-full max-w-6xl space-y-16">
-        <div className="mb-4 flex justify-end">
+        <div className="flex items-center justify-between rounded-xl bg-white/80 px-6 py-4 shadow-sm ring-1 ring-orange-100 backdrop-blur-sm">
+          <h1 className="text-xl font-semibold tracking-wide text-orange-800">
+            Admin Access Panel
+          </h1>
           <button
             onClick={handleLogout}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-red-700"
+            className="rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white shadow transition hover:bg-red-700"
           >
             Logout
           </button>

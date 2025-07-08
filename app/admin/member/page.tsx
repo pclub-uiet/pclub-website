@@ -141,8 +141,8 @@ export default function MemberPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-16 text-gray-900">
-      <div className="mx-auto w-full max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
+      <div className="mx-auto w-full max-w-6xl">
         <div className="mb-10 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <button
             className="rounded-lg bg-orange-500 px-6 py-3 text-white shadow-md transition hover:bg-orange-600"

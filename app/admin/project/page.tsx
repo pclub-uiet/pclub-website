@@ -174,7 +174,7 @@ export default function ProjectListPage() {
             <input
               type="text"
               name="search"
-              placeholder="Search projects"
+              placeholder="Search by title"
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />

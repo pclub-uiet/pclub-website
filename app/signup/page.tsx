@@ -8,7 +8,7 @@ import toast from "react-hot-toast"
 import { NextResponse } from "next/server"
 
 export default function Signup() {
-  const router = useRouter()
+  // const router = useRouter()
 
   const [user, setUser] = useState({
     name: "",
