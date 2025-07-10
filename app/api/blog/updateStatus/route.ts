@@ -1,6 +1,7 @@
 import { PrismaClient } from "@/lib/generated/prisma"
 import { NextResponse, NextRequest } from "next/server"
 import { getAuthSession } from "@/lib/auth"
+import { sendBlogPublishedMail } from "@/lib/mailer"
 
 const prisma = new PrismaClient()
 
@@ -29,6 +30,10 @@ export async function PUT(req: NextRequest) {
     const res = await req.json()
     const { id, status, publishedAt } = res
 
+    const old = await prisma.blog.findUnique({
+      where: { id },
+    })
+
     const updatedStatus = await prisma.blog.update({
       where: { id },
       data: {
@@ -36,6 +41,14 @@ export async function PUT(req: NextRequest) {
         publishedAt: new Date(publishedAt),
       },
     })
+
+    if (old?.status !== "PUBLISHED" && status === "PUBLISHED") {
+      // Send email notification if blog is published
+      sendBlogPublishedMail(updatedStatus).catch((err) =>
+        console.error("Failed to send blog published email:", err),
+      )
+    }
+
     return NextResponse.json(updatedStatus, { status: 200 })
   } catch (error: any) {
     console.log(error.message)

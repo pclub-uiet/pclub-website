@@ -7,3 +7,22 @@ html, body {
   height: 100%;
   scroll-behavior: smooth;
 }
+
+
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: linear-gradient(to right, #ec4899, #a855f7, #3b82f6);
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+#nprogress .peg {
+  display: none;
+}

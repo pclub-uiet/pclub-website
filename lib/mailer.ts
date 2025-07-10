@@ -34,8 +34,8 @@ export async function sendBlogPublishedMail(blog: {
   const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000"
   const link =
     blog.slug && blog.slug.length > 0
-      ? `${SITE_URL}/blogPage/${blog.slug}`
-      : `${SITE_URL}/blogPage/${blog.id}`
+      ? `${SITE_URL}/blog/${blog.slug}`
+      : `${SITE_URL}/blog/${blog.id}`
 
   const subscribers = await prisma.subscriber.findMany({
     where: { isVerified: true },

@@ -6,7 +6,7 @@ import axios from "axios"
 import Image from "next/image"
 import EditEventModal from "@/components/ui/EditEventModal"
 import AddEventModal from "@/components/ui/AddEventModal"
-
+import nProgress from "nprogress"
 type Status = "UPCOMING" | "COMPLETED" | "CANCELLED"
 
 interface Event {
@@ -27,17 +27,21 @@ interface Event {
 export default function EventPage() {
   const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
+
   const [addEvent, setAddEvent] = useState<Event | null>(null)
   const [editEvent, setEditEvent] = useState<Event | null>(null)
   const [search, setSearch] = useState("")
 
   useEffect(() => {
     const fetchEvents = async () => {
+      nProgress.start()
       try {
         const res = await axios.get("/api/event/getEvent")
         setEvents(res.data)
       } catch (error: any) {
         toast.error("Failed to fetch events")
+      } finally {
+        nProgress.done()
       }
     }
     fetchEvents()
@@ -105,6 +109,27 @@ export default function EventPage() {
 
     return `${day}${getDaySuffix(day)} ${monthName}, ${year}`
   }
+
+  const SkeletonCard = () => (
+    <div className="flex animate-pulse flex-col overflow-hidden rounded-3xl border border-orange-200 bg-white shadow-xl ring-1 ring-orange-100 backdrop-blur-md">
+      <div className="h-48 w-full bg-gray-200" />
+      <div className="flex flex-1 flex-col justify-between px-6 py-5">
+        <div className="space-y-2">
+          <div className="h-6 w-3/4 rounded bg-gray-300" />
+          <div className="h-4 w-full rounded bg-gray-300" />
+          <div className="h-4 w-2/3 rounded bg-gray-300" />
+          <div className="mt-3 flex gap-2">
+            <div className="h-4 w-12 rounded-full bg-gray-200" />
+            <div className="h-4 w-16 rounded-full bg-gray-200" />
+          </div>
+        </div>
+        <div className="mt-4 flex gap-4 border-t border-orange-100 pt-4">
+          <div className="h-9 w-20 rounded-full bg-gray-300" />
+          <div className="h-9 w-20 rounded-full bg-gray-300" />
+        </div>
+      </div>
+    </div>
+  )
 
   const Card: React.FC<{ event: Event }> = ({ event }) => {
     const getStatusStyle = (status: Status) => {

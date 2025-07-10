@@ -8,6 +8,7 @@ import Image from "next/image"
 import Link from "next/link"
 import AddProjectModal from "@/components/ui/AddProjectModal"
 import EditProjectModal from "@/components/ui/EditProjectModal"
+import nProgress from "nprogress"
 
 interface Project {
   id: string
@@ -23,17 +24,21 @@ interface Project {
 export default function ProjectListPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
+
   const [addProject, setAddProject] = useState<Project | null>(null)
   const [editProject, setEditProject] = useState<Project | null>(null)
   const [search, setSearch] = useState("")
 
   useEffect(() => {
     const fetchProjects = async () => {
+      nProgress.start()
       try {
         const res = await axios.get("/api/project/getProject")
         setProjects(res.data)
       } catch (error: any) {
         toast.error("Failed to fetch projects")
+      } finally {
+        nProgress.done()
       }
     }
     fetchProjects()
@@ -101,6 +106,7 @@ export default function ProjectListPage() {
                 Visit Repo
               </a>
             </p>
+
             {project.livelink && (
               <p className="text-xs text-green-600">
                 LiveLink:{" "}
@@ -114,6 +120,7 @@ export default function ProjectListPage() {
                 </a>
               </p>
             )}
+
             <p className="text-xs text-gray-500">
               Contributors: {project.contributors.join(", ") || "N/A"}
             </p>

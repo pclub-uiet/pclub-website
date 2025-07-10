@@ -5,7 +5,7 @@ import toast from "react-hot-toast"
 import axios from "axios"
 import Image from "next/image"
 import Link from "next/link"
-
+import nProgress from "nprogress"
 type BlogStatus = "DRAFT" | "PUBLISHED"
 
 interface Blog {
@@ -24,15 +24,21 @@ export default function BlogPage() {
   const router = useRouter()
   const [publishedBlogs, setPublishedBlogs] = useState<Blog[]>([])
   const [selectedTag, setSelectedTag] = useState<string>("All")
+  const [loadingBlogs, setLoadingBlogs] = useState(true)
 
   useEffect(() => {
     const fetchBlogs = async () => {
+      nProgress.start() // Start the progress bar
       try {
+        setLoadingBlogs(true)
         const res = await axios.get("/api/blog/getPublishedBlogs")
         setPublishedBlogs(res.data)
       } catch (error: any) {
         console.log(error.message)
         toast.error("Failed to fetch published blogs")
+      } finally {
+        setLoadingBlogs(false)
+        nProgress.done() // Stop the progress bar
       }
     }
     fetchBlogs()
@@ -44,26 +50,39 @@ export default function BlogPage() {
 
   const [email, setEmail] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(false)
-  const [message, setMessage] = useState<string>("")
 
   const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
-    setMessage("")
+
     try {
-      const res = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      })
-      const data = await res.json()
-      setMessage(data.msg || "Something went wrong.")
-      if (res.ok) setEmail("")
-    } catch (error) {
-      setMessage("Subscription failed. Try again.")
+      setLoading(true)
+      const res = await axios.post("/api/subscribe", { email })
+      toast.success(res.data.msg || "Subscribed successfully!")
+      setEmail("")
+    } catch (error: any) {
+      toast.error("Subscription failed. Try again.")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
+
+  const SkeletonCard = () => (
+    <div className="flex min-h-[400px] animate-pulse flex-col justify-between overflow-hidden rounded-2xl border border-[#5a3c88] bg-[#2b223d] shadow-md">
+      <div className="h-48 w-full bg-gray-700/50" />
+      <div className="flex flex-1 flex-col justify-between gap-4 p-5">
+        <div className="space-y-2">
+          <div className="h-6 w-3/4 rounded bg-gray-600" />
+          <div className="h-4 w-full rounded bg-gray-600" />
+          <div className="h-4 w-1/2 rounded bg-gray-600" />
+          <div className="mt-3 flex gap-2">
+            <div className="h-4 w-12 rounded-full bg-gray-700" />
+            <div className="h-4 w-16 rounded-full bg-gray-700" />
+          </div>
+        </div>
+        <div className="h-4 w-24 rounded bg-gray-500" />
+      </div>
+    </div>
+  )
 
   const Card: React.FC<{ blog: Blog }> = ({ blog }) => {
     return (
@@ -120,10 +139,9 @@ export default function BlogPage() {
 
         <p className="mb-8 max-w-2xl animate-fade-in text-center text-gray-300 delay-100">
           Discover our latest insights and creative explorations in technology,
-          design, and AI.
+          design, and AI
         </p>
 
-        {/* Subscribe Form */}
         <form
           onSubmit={handleSubscribe}
           className="mb-10 flex w-full max-w-xl animate-fade-in gap-3 delay-200"
@@ -146,10 +164,6 @@ export default function BlogPage() {
           </button>
         </form>
 
-        {message && (
-          <p className="mb-6 text-center text-sm text-pink-300">{message}</p>
-        )}
-
         <div className="mb-10 flex animate-fade-in flex-wrap justify-center gap-3 delay-300">
           {["All", "AI", "ML", "WebDev", "Data Science"].map((tag) => (
             <button
@@ -167,9 +181,11 @@ export default function BlogPage() {
         </div>
 
         <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredBlogs.map((blog: Blog) => (
-            <Card key={blog.id} blog={blog} />
-          ))}
+          {loadingBlogs
+            ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+            : filteredBlogs.map((blog: Blog) => (
+                <Card key={blog.id} blog={blog} />
+              ))}
         </div>
 
         {filteredBlogs.length === 0 && (

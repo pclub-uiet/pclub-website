@@ -8,7 +8,7 @@ import Image from "next/image"
 import Link from "next/link"
 import AddBlogModal from "@/components/ui/AddBlogModal"
 import EditBlogModal from "@/components/ui/EditBlogModal"
-
+import nProgress from "nprogress"
 type BlogStatus = "DRAFT" | "PUBLISHED"
 
 interface Blog {
@@ -35,6 +35,7 @@ export default function BlogPage() {
   const router = useRouter()
 
   const [blogs, setBlogs] = React.useState<Blog[]>([])
+
   const [addBlog, setAddBlog] = React.useState<Blog | null>(null)
   const [editBlog, setEditBlog] = React.useState<Blog | null>(null)
   const [publishDate, setPublishDate] = React.useState(false)
@@ -47,11 +48,14 @@ export default function BlogPage() {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      nProgress.start()
       try {
         const res = await axios.get("/api/blog/getBlog")
         setBlogs(res.data)
       } catch (error: any) {
         toast.error("Failed to fetch blogs")
+      } finally {
+        nProgress.done()
       }
     }
     fetchEvents()

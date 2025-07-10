@@ -6,6 +6,7 @@ import axios from "axios"
 import toast from "react-hot-toast"
 import { NextResponse, NextRequest } from "next/server"
 import { signOut } from "next-auth/react"
+import nProgress from "nprogress"
 
 type User = {
   id: string
@@ -19,13 +20,16 @@ type User = {
 export default function AdminPage() {
   const router = useRouter()
 
+  const [loading, setLoading] = useState(true)
   const [pendingUser, setPendingUser] = React.useState<User[]>([])
   const [approveUser, setApproveUser] = React.useState<User[]>([])
   const [rejectUser, setRejectUser] = React.useState<User[]>([])
 
   // Fetch Data from Server
   const fetchData = async () => {
+    nProgress.start() // Start the progress bar
     try {
+      setLoading(true)
       const pendingRes = await axios.get("/api/admin/pending_user")
       const approveRes = await axios.get("/api/admin/getApprovedUsers")
       const rejectRes = await axios.get("/api/admin/getRejectedUsers")
@@ -36,6 +40,9 @@ export default function AdminPage() {
     } catch (error: any) {
       console.log(error.message)
       toast.error("Error loading admin data")
+    } finally {
+      setLoading(false)
+      nProgress.done() // Stop the progress bar
     }
   }
 
@@ -70,6 +77,21 @@ export default function AdminPage() {
     })
   }
 
+  const SkeletonCard = () => (
+    <div className="w-full max-w-md animate-pulse rounded-2xl border border-orange-200 bg-white/40 p-6 shadow backdrop-blur-md">
+      <div className="mb-3 h-4 w-24 rounded bg-gray-300" />
+      <div className="space-y-3 text-sm">
+        <div className="h-4 w-3/4 rounded bg-gray-300" />
+        <div className="h-4 w-1/2 rounded bg-gray-300" />
+        <div className="h-4 w-1/3 rounded bg-gray-300" />
+      </div>
+      <div className="mt-6 flex gap-4">
+        <div className="h-8 flex-1 rounded bg-gray-300" />
+        <div className="h-8 flex-1 rounded bg-gray-300" />
+      </div>
+    </div>
+  )
+
   const Card: React.FC<{ user: User; actions?: boolean }> = ({
     user,
     actions,
@@ -79,6 +101,7 @@ export default function AdminPage() {
         <div className="absolute right-3 top-3 text-xs text-gray-400">
           {new Date(user.createdAt).toLocaleDateString()}
         </div>
+
         <div className="space-y-3 text-sm">
           <div className="flex items-center gap-2 text-gray-700">
             <span className="text-lg font-semibold text-orange-700">👤</span>
@@ -87,13 +110,15 @@ export default function AdminPage() {
               {user.name || "Unknown"}
             </span>
           </div>
+
           <div className="flex items-center gap-2 text-gray-700">
-            <span className="text-lg font-semibold text-orange-700">✉️</span>
+            <span className="text-lg font-semibold text-orange-700">✉</span>
             <span>
               <span className="font-semibold text-gray-900">Email:</span>{" "}
               {user.email}
             </span>
           </div>
+
           <div className="flex items-center gap-2 text-gray-700">
             <span className="text-lg font-semibold text-orange-700">🔑</span>
             <span>
@@ -102,6 +127,7 @@ export default function AdminPage() {
             </span>
           </div>
         </div>
+
         {actions && (
           <div className="mt-6 flex gap-4">
             <button
@@ -142,7 +168,9 @@ export default function AdminPage() {
             Pending Requests
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {pendingUser.length ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
+            ) : pendingUser.length ? (
               pendingUser.map((user) => (
                 <Card key={user.id} user={user} actions />
               ))
@@ -159,7 +187,9 @@ export default function AdminPage() {
             Approved Admins
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {approveUser.length ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
+            ) : approveUser.length ? (
               approveUser.map((user) => <Card key={user.id} user={user} />)
             ) : (
               <p className="col-span-full text-center text-gray-600">
@@ -174,7 +204,9 @@ export default function AdminPage() {
             Rejected Users
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {rejectUser.length ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
+            ) : rejectUser.length ? (
               rejectUser.map((user) => <Card key={user.id} user={user} />)
             ) : (
               <p className="col-span-full text-center text-gray-600">

@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faGithub, faLinkedin } from "@fortawesome/free-brands-svg-icons"
 import EditMemberModal from "@/components/ui/EditMemberModal"
 import AddMemberModal from "@/components/ui/AddMemberModal"
+import NProgress from "nprogress"
 
 type Member = {
   id: string
@@ -26,17 +27,21 @@ type Member = {
 export default function MemberPage() {
   const router = useRouter()
   const [members, setMembers] = useState<Member[]>([])
+
   const [editMember, setEditMember] = React.useState<Member | null>(null)
   const [addMember, setAddMember] = React.useState<Member | null>(null)
   const [search, setSearch] = React.useState("")
 
   useEffect(() => {
     const fetchMembers = async () => {
+      NProgress.start()
       try {
         const allData = await axios.get("/api/member/getMember")
         setMembers(allData.data)
       } catch (error: any) {
         toast.error("Failed to fetch members")
+      } finally {
+        NProgress.done()
       }
     }
     fetchMembers()
@@ -87,6 +92,7 @@ export default function MemberPage() {
                 className="h-24 w-24 rounded-full border-2 border-orange-500 object-cover shadow-md"
               />
             )}
+
             <div className="space-y-1 text-sm text-gray-700">
               <p className="text-lg font-semibold text-orange-900">
                 {member.name}
@@ -97,6 +103,7 @@ export default function MemberPage() {
                 {member.branch} - Year {member.year}
               </p>
             </div>
+
             <div className="mt-4 flex gap-5 text-xl">
               {member.socials.linkedin && (
                 <a
@@ -174,14 +181,19 @@ export default function MemberPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
-          {members
-            .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
-            .map((member: Member) => (
-              <Card key={member.id} member={member} />
-            ))}
+        <div className="min-h-[300px]">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
+            {members
+              .filter((m) =>
+                m.name.toLowerCase().includes(search.toLowerCase()),
+              )
+              .map((member: Member) => (
+                <Card key={member.id} member={member} />
+              ))}
+          </div>
         </div>
 
+        {/* Modals */}
         {editMember && (
           <EditMemberModal
             member={editMember}

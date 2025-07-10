@@ -8,7 +8,7 @@ import toast from "react-hot-toast"
 import { NextResponse } from "next/server"
 
 export default function Signup() {
-  // const router = useRouter()
+  const router = useRouter()
 
   const [user, setUser] = useState({
     name: "",
@@ -37,6 +37,8 @@ export default function Signup() {
         email: "",
         password: "",
       })
+
+      router.push("/") // Redirect to home page after successful signup
     } catch (error: any) {
       console.log("Signup failed", error.message)
       toast.error("Signup failed")

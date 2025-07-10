@@ -39,11 +39,13 @@ interface Blog {
 export default function BlogDetailPage() {
   const { id } = useParams()
   const [blogs, setBlogs] = useState<Blog | null>(null)
+  const [loading, setLoading] = useState(true)
   const [shareUrl, setShareUrl] = useState("")
 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
+        setLoading(true)
         const res = await axios.get("/api/blog/getBlogDetails", {
           params: { id },
         })
@@ -52,6 +54,8 @@ export default function BlogDetailPage() {
       } catch (error: any) {
         console.error(error.message)
         toast.error("Failed to fetch blog details")
+      } finally {
+        setLoading(false)
       }
     }
     if (id) fetchBlog()
@@ -63,25 +67,60 @@ export default function BlogDetailPage() {
     }
   }, [])
 
-  if (!blogs) return <div className="p-10 text-center">Loading...</div>
+  const SkeletonBlogDetail = () => (
+    <div className="animate-pulse space-y-6">
+      <div className="h-6 w-1/2 rounded bg-gray-700" />
+      <div className="h-5 w-1/3 rounded bg-gray-700" />
+      <div className="h-72 w-full rounded-lg bg-gray-700" />
+      <div className="space-y-2">
+        <div className="h-6 w-1/4 rounded bg-gray-700" />
+        <div className="h-4 w-full rounded bg-gray-700" />
+        <div className="h-4 w-5/6 rounded bg-gray-700" />
+        <div className="h-4 w-4/6 rounded bg-gray-700" />
+      </div>
+
+      <div className="space-y-2">
+        <div className="h-6 w-1/4 rounded bg-gray-700" />
+        <div className="h-4 w-full rounded bg-gray-700" />
+        <div className="h-4 w-5/6 rounded bg-gray-700" />
+        <div className="h-4 w-4/6 rounded bg-gray-700" />
+        <div className="h-4 w-3/6 rounded bg-gray-700" />
+      </div>
+
+      <div className="mt-10 flex gap-4">
+        <div className="h-10 w-24 rounded bg-gray-700" />
+        <div className="h-10 w-24 rounded bg-gray-700" />
+      </div>
+    </div>
+  )
+
+  if (loading || !blogs) {
+    return (
+      <div className="min-h-screen bg-[#141629] px-6 py-12 text-gray-200">
+        <div className="mx-auto max-w-4xl animate-fade-in space-y-10">
+          <SkeletonBlogDetail />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#141629] px-6 py-12 text-gray-200">
       <div className="mx-auto max-w-4xl animate-fade-in space-y-10">
-        {/* Enhanced Top Section */}
         <div className="flex flex-col gap-4 text-sm text-gray-400 sm:flex-row sm:items-center sm:justify-between">
-          {/* Author + Date + Read Time */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2 text-pink-400">
               <FontAwesomeIcon icon={faPenNib} />
               <span className="font-medium text-gray-300">{blogs.author}</span>
             </div>
+
             <div className="flex items-center gap-2 text-purple-400">
               <FontAwesomeIcon icon={faCalendarDays} />
               <span className="font-medium text-gray-300">
                 {new Date(blogs.publishedAt).toDateString()}
               </span>
             </div>
+
             <div className="flex items-center gap-2 text-indigo-400">
               <FontAwesomeIcon icon={faBookOpen} />
               <span className="font-medium text-gray-300">
@@ -115,6 +154,7 @@ export default function BlogDetailPage() {
               alt={`${blogs.title} cover image`}
               fill
               className="object-cover"
+              priority
             />
           </div>
         )}
@@ -148,6 +188,7 @@ export default function BlogDetailPage() {
               href={`https://www.instagram.com/?url=${encodeURIComponent(shareUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Share this blog on Instagram"
               title="Share on Instagram"
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-pink-400 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
@@ -160,6 +201,7 @@ export default function BlogDetailPage() {
               target="_blank"
               rel="noopener noreferrer"
               title="Share on LinkedIn"
+              aria-label="Share this blog on LinkedIn"
               className="flex items-center gap-2 rounded-full bg-blue-700 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
               <FontAwesomeIcon icon={faLinkedin} />
@@ -171,6 +213,7 @@ export default function BlogDetailPage() {
               target="_blank"
               rel="noopener noreferrer"
               title="Share on Twitter"
+              aria-label="Share this blog on Twitter"
               className="flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
               <FontAwesomeIcon icon={faTwitter} />
@@ -182,6 +225,7 @@ export default function BlogDetailPage() {
               target="_blank"
               rel="noopener noreferrer"
               title="Share on WhatsApp"
+              aria-label="Share this blog on WhatsApp"
               className="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow-md transition hover:brightness-105"
             >
               <FontAwesomeIcon icon={faWhatsapp} />

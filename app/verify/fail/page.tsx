@@ -9,7 +9,7 @@ export default function FailPage() {
           The token is invalid or has expired. Please try subscribing again.
         </p>
         <a
-          href="/subscribe"
+          href="/blog"
           className="inline-block rounded-lg bg-red-600 px-6 py-2 font-semibold text-white transition hover:bg-red-700"
         >
           Try Again
