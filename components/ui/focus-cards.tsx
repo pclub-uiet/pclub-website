@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 export const Card = React.memo(
   ({
@@ -23,7 +24,7 @@ export const Card = React.memo(
         hovered !== null && hovered !== index && "scale-[0.98] blur-sm",
       )}
     >
-      <img
+      <Image
         src={card.src.src}
         alt={card.title}
         className="absolute inset-0 object-cover"

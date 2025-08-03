@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Required for manual login
+  password String?
+
+  // Custom fields for admin system
+  role     Role    @default(USER)
+  approved Boolean @default(false)
+
+  // For NextAuth adapter
+  accounts Account[]
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  ROOT_ADMIN
+  REJECTED_USER
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Member {
+  id              String   @id @default(cuid()) // Unique identifier for each member - @id is used for primary key
+  name            String
+  email           String   @unique
+  roll_no         String   @unique
+  role            String?
+  branch          String
+  year            Int
+  socials         Json // for key-value pairs
+  profile_picture String? // Image URL
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt // Auto-updated on changes
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  title        String
+  desc         String
+  eventType    String[]
+  registerLink String
+  bannerImage  String?
+  status       Status // single enum (not array)
+  organizer    String?
+  speaker      String?
+  recordLink   String?
+  date         DateTime
+  location     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum Status {
+  Upcoming
+  Completed
+  Cancelled
+}
+
+model Blog {
+  id          String     @id @default(cuid())
+  title       String
+  desc        String // show this at admin page
+  content     String // show at public blog page, not on admin
+  coverImage  String?
+  tags        String[] // e.g.- ai, ml, webd, ui/ux, data science
+  author      String?
+  status      BlogStatus @default(DRAFT)
+  publishedAt DateTime? // set this when status = PUBLISHED
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+enum BlogStatus {
+  PUBLISHED
+  DRAFT
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  title        String   
+  desc         String   
+  repolink     String   
+  livelink     String?   
+  contributors String[]     // array of contributor names 
+  techstack    String[]     
+  image        String?      // project image
+  createdAt    DateTime @default(now()) 
+  updatedAt    DateTime @updatedAt 
+}
