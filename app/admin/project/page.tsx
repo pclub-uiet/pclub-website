@@ -6,9 +6,9 @@ import axios from "axios"
 import { NextResponse, NextRequest } from "next/server"
 import Image from "next/image"
 import Link from "next/link"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import AddProjectModal from "@/components/ui/AddProjectModal"
 import EditProjectModal from "@/components/ui/EditProjectModal"
+import nProgress from "nprogress"
 
 interface Project {
   id: string
@@ -24,17 +24,21 @@ interface Project {
 export default function ProjectListPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
+
   const [addProject, setAddProject] = useState<Project | null>(null)
   const [editProject, setEditProject] = useState<Project | null>(null)
   const [search, setSearch] = useState("")
 
   useEffect(() => {
     const fetchProjects = async () => {
+      nProgress.start()
       try {
         const res = await axios.get("/api/project/getProject")
         setProjects(res.data)
       } catch (error: any) {
         toast.error("Failed to fetch projects")
+      } finally {
+        nProgress.done()
       }
     }
     fetchProjects()
@@ -85,47 +89,51 @@ export default function ProjectListPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 px-6 py-5">
-          <h3 className="line-clamp-2 text-lg font-bold text-orange-900">
-            {project.title}
-          </h3>
-          <p className="line-clamp-3 text-sm text-gray-700">{project.desc}</p>
-          <p className="text-xs text-blue-600">
-            RepoLink:{" "}
-            <a
-              href={project.repolink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline"
-            >
-              Visit Repo
-            </a>
-          </p>
-          {project.livelink && (
-            <p className="text-xs text-green-600">
-              LiveLink:{" "}
+        <div className="flex flex-1 flex-col justify-between px-6 py-5">
+          <div className="flex flex-col gap-3">
+            <h3 className="line-clamp-2 text-lg font-bold text-orange-900">
+              {project.title}
+            </h3>
+            <p className="line-clamp-3 text-sm text-gray-700">{project.desc}</p>
+            <p className="text-xs text-blue-600">
+              RepoLink:{" "}
               <a
-                href={project.livelink}
+                href={project.repolink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
               >
-                Visit Live
+                Visit Repo
               </a>
             </p>
-          )}
-          <p className="text-xs text-gray-500">
-            Contributors: {project.contributors.join(", ") || "N/A"}
-          </p>
-          <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
-            {project.techstack.map((tech, idx) => (
-              <span
-                key={idx}
-                className="rounded-full bg-orange-100 px-2 py-0.5"
-              >
-                #{tech}
-              </span>
-            ))}
+
+            {project.livelink && (
+              <p className="text-xs text-green-600">
+                LiveLink:{" "}
+                <a
+                  href={project.livelink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  Visit Live
+                </a>
+              </p>
+            )}
+
+            <p className="text-xs text-gray-500">
+              Contributors: {project.contributors.join(", ") || "N/A"}
+            </p>
+            <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
+              {project.techstack.map((tech, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-full bg-orange-100 px-2 py-0.5"
+                >
+                  #{tech}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="mt-5 flex flex-wrap justify-start gap-4">
@@ -173,7 +181,7 @@ export default function ProjectListPage() {
             <input
               type="text"
               name="search"
-              placeholder="Search projects"
+              placeholder="Search by title"
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />

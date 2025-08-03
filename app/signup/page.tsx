@@ -37,6 +37,8 @@ export default function Signup() {
         email: "",
         password: "",
       })
+
+      router.push("/") // Redirect to home page after successful signup
     } catch (error: any) {
       console.log("Signup failed", error.message)
       toast.error("Signup failed")

@@ -27,7 +27,17 @@ export async function PUT(req: NextRequest) {
     }
 
     const res = await req.json()
-    const { id, title, desc, eventType, status, speaker, date, location } = res
+    const {
+      id,
+      title,
+      desc,
+      eventType,
+      status,
+      speaker,
+      date,
+      location,
+      bannerImage,
+    } = res
 
     if (!id) {
       return NextResponse.json({ error: "Missing event ID" }, { status: 400 })
@@ -46,6 +56,7 @@ export async function PUT(req: NextRequest) {
         speaker,
         date: new Date(date),
         location,
+        bannerImage,
       },
     })
     return NextResponse.json(updatedEvent, { status: 200 })

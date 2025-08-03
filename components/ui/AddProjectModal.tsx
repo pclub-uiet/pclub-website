@@ -74,6 +74,44 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
     }
   }
 
+  const [uploadingImage, setUploadingImage] = React.useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+
+    const formDataUpload = new FormData()
+    formDataUpload.append("file", file)
+    formDataUpload.append("upload_preset", "Pclubwebsite")
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/da9v08yg8/image/upload",
+        {
+          method: "POST",
+          body: formDataUpload,
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok || !data.secure_url) {
+        alert(
+          "Image upload failed: " + (data.error?.message || "Unknown error"),
+        )
+        return
+      }
+
+      setFormData((prev) => ({ ...prev, image: data.secure_url }))
+    } catch (err) {
+      alert("Failed to upload image")
+      console.error("Cloudinary upload error:", err)
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-orange-300 bg-white shadow-2xl">
@@ -88,7 +126,7 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
           </button>
         </div>
 
-        <div className="max-h-[80vh] overflow-y-auto px-8 py-6">
+        <div className="max-h-[80vh] overflow-y-auto bg-white px-8 py-6">
           <form onSubmit={onSubmit} className="space-y-5">
             <input
               type="text"
@@ -96,7 +134,7 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
               placeholder="Enter Title of Project"
               value={formData.title}
               onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-md border border-orange-600 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
             <input
@@ -105,7 +143,7 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
               placeholder="Enter Description of Project"
               value={formData.desc}
               onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-md border border-orange-600 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
             <input
@@ -114,7 +152,7 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
               placeholder="Enter RepoLink of Project"
               value={formData.repolink}
               onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-md border border-orange-600 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
             <input
@@ -123,7 +161,7 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
               placeholder="Enter LiveLink of Project"
               value={formData.livelink}
               onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-md border border-orange-600 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
             <input
@@ -137,7 +175,7 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
                   contributors: e.target.value.split(",").map((s) => s.trim()),
                 }))
               }
-              className="w-full rounded-md border border-gray-300 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-md border border-orange-600 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
             <input
@@ -151,17 +189,30 @@ export default function AddProjectModal({ project, onClose, onAdd }: any) {
                   techstack: e.target.value.split(",").map((s) => s.trim()),
                 }))
               }
-              className="w-full rounded-md border border-gray-300 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-md border border-orange-600 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
-            <input
-              type="text"
-              name="image"
-              placeholder="Enter Image URL of Project"
-              value={formData.image}
-              onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-5 py-3 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
+            <div>
+              <label className="mb-2 block font-medium text-gray-600">
+                Upload Project Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="block w-full cursor-pointer rounded-lg border border-orange-600 bg-white p-2 text-sm text-gray-700 shadow-sm"
+              />
+              {uploadingImage && (
+                <p className="mt-2 text-sm text-blue-500">Uploading...</p>
+              )}
+              {formData.image && (
+                <img
+                  src={formData.image}
+                  alt="Project"
+                  className="mt-3 max-h-60 w-full rounded-lg border border-gray-300 object-contain"
+                />
+              )}
+            </div>
 
             {load ? (
               <div className="flex justify-center">

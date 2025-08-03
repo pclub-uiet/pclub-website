@@ -1,44 +1,40 @@
-import withAuth from "next-auth/middleware";    //  A NextAuth helper that wraps our middleware with built-in session handling
+import withAuth from "next-auth/middleware";  // A NextAuth helper that wraps our middleware with built-in session handling
 import { NextResponse } from "next/server";
 
 export default withAuth(
     // The middlware function will only be invoked if the authorized callback returns true
-    function middleware() {
-        return NextResponse.next();
-    },
+  function middleware() {
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
 
-    {
-        callbacks: {
-            authorized: async ({ token, req }) => {
-                const { pathname } = req.nextUrl;
-
-                // allow auth related routes
-                if (pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/signup") {
-                    return true;
-                }
-
-                // public paths
-                if (pathname === "/") {
-                    return true;
-                }
-
-                if ((pathname === "/admin" || pathname === "/event" || pathname === "/member" || pathname === "/blog" || pathname === "/project") && (token?.approved !== true)) {
-                    return false;
-                }
-
-                return !!token;   //  !! (double NOT) operator is a shorthand trick to convert any value into a strict boolean
-            }
+        // Allow public/auth routes
+        if (
+          pathname.startsWith("/api/auth") ||
+          pathname === "/login" ||
+          pathname === "/signup" ||
+          pathname === "/"
+        ) {
+          return true;
         }
-    }
-)
 
+        // Protect these routes
+        const protectedPaths = ["/admin", "/admin/event", "/admin/member", "/admin/blog", "/admin/project"];
+        if (protectedPaths.includes(pathname)) {
+          if (!token) return false;
+          if (!token.approved) return false;
+          return true;
+        }
+
+        return !!token;     //  !! (double NOT) operator is a shorthand trick to convert any value into a strict boolean
+      },
+    },
+  }
+);
 
 export const config = {
-    matcher: [
-        '/admin',
-        '/event',
-        '/member',
-        '/blog',
-        '/project'
-    ]
-}
+  matcher: ["/admin", "/admin/event", "/admin/member", "/admin/blog", "/admin/project"],
+};

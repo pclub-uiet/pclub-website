@@ -67,6 +67,46 @@ export default function EditBlogModal({ blog, onClose, onEdit }: any) {
     }
   }
 
+  const [uploadingImage, setUploadingImage] = React.useState(false)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+
+    const formDataUpload = new FormData()
+    formDataUpload.append("file", file)
+    formDataUpload.append("upload_preset", "Pclubwebsite") // 👈 Your preset
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/da9v08yg8/image/upload",
+        {
+          method: "POST",
+          body: formDataUpload,
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok || !data.secure_url) {
+        alert(
+          "Image upload failed: " + (data.error?.message || "Unknown error"),
+        )
+        return
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        coverImage: data.secure_url,
+      }))
+    } catch (err) {
+      alert("Failed to upload image")
+      console.error("Cloudinary upload error:", err)
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-orange-300 bg-white shadow-2xl">
@@ -110,14 +150,27 @@ export default function EditBlogModal({ blog, onClose, onEdit }: any) {
               className="w-full rounded-md border border-orange-500 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
-            <input
-              type="text"
-              name="coverImage"
-              placeholder="Image URL"
-              value={formData.coverImage}
-              onChange={handleChange}
-              className="w-full rounded-md border border-orange-500 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
+            <div>
+              <label className="mb-2 block font-medium text-gray-600">
+                Cover Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="block w-full cursor-pointer rounded-lg border border-orange-600 bg-white p-2 text-sm text-gray-700 shadow-sm"
+              />
+              {uploadingImage && (
+                <p className="mt-2 text-sm text-blue-500">Uploading image...</p>
+              )}
+              {formData.coverImage && (
+                <img
+                  src={formData.coverImage}
+                  alt="Cover"
+                  className="mt-3 max-h-60 w-full rounded-lg border border-gray-300 object-contain"
+                />
+              )}
+            </div>
 
             <input
               type="text"

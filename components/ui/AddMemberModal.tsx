@@ -100,6 +100,44 @@ export default function AddMemberModal({ member, onClose, onAdd }: any) {
     }
   }
 
+  const [uploadingImage, setUploadingImage] = React.useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+
+    const formDataUpload = new FormData()
+    formDataUpload.append("file", file)
+    formDataUpload.append("upload_preset", "Pclubwebsite") // 👈 your preset
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/da9v08yg8/image/upload",
+        {
+          method: "POST",
+          body: formDataUpload,
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok || !data.secure_url) {
+        alert(
+          "Image upload failed: " + (data.error?.message || "Unknown error"),
+        )
+        return
+      }
+
+      setFormData((prev) => ({ ...prev, profile_picture: data.secure_url }))
+    } catch (err) {
+      alert("Failed to upload image")
+      console.error("Cloudinary upload error:", err)
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-orange-300 bg-white shadow-2xl">
@@ -174,14 +212,30 @@ export default function AddMemberModal({ member, onClose, onAdd }: any) {
               className="w-full rounded-md border border-orange-600 px-4 py-3 text-black placeholder-gray-400"
             />
 
-            <input
-              type="text"
-              placeholder="Image URL"
-              name="profile_picture"
-              value={formData.profile_picture}
-              onChange={handleChange}
-              className="w-full rounded-md border border-orange-600 px-4 py-3 text-black placeholder-gray-400"
-            />
+            {/* Profile Picture Upload */}
+            <div>
+              <label className="mb-2 block font-medium text-gray-700">
+                Profile Picture
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="block w-full cursor-pointer rounded-lg border border-orange-600 bg-white p-2 text-sm text-gray-700 shadow-sm"
+              />
+
+              {uploadingImage && (
+                <p className="mt-2 text-sm text-blue-500">Uploading image...</p>
+              )}
+
+              {formData.profile_picture && (
+                <img
+                  src={formData.profile_picture}
+                  alt="Profile Preview"
+                  className="mt-3 h-24 w-24 rounded-full border border-gray-300 object-cover"
+                />
+              )}
+            </div>
 
             {/* Socials section */}
             <div className="mb-2 flex items-center justify-between">

@@ -3,12 +3,9 @@ import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 import axios from "axios"
-import { NextResponse, NextRequest } from "next/server"
 import Image from "next/image"
 import Link from "next/link"
-import AddBlogModal from "@/components/ui/AddBlogModal"
-import EditBlogModal from "@/components/ui/EditBlogModal"
-
+import nProgress from "nprogress"
 type BlogStatus = "DRAFT" | "PUBLISHED"
 
 interface Blog {
@@ -25,162 +22,108 @@ interface Blog {
 
 export default function BlogPage() {
   const router = useRouter()
-
-  const [blogs, setBlogs] = React.useState<Blog[]>([])
-  const [addBlog, setAddBlog] = React.useState<Blog | null>(null)
-  const [editBlog, setEditBlog] = React.useState<Blog | null>(null)
-  const [publishDate, setPublishDate] = React.useState(false)
-
-  const [search, setSearch] = useState("")
+  const [publishedBlogs, setPublishedBlogs] = useState<Blog[]>([])
+  const [selectedTag, setSelectedTag] = useState<string>("All")
+  const [loadingBlogs, setLoadingBlogs] = useState(true)
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchBlogs = async () => {
+      nProgress.start() // Start the progress bar
       try {
-        const res = await axios.get("/api/blog/getBlog")
-        setBlogs(res.data)
+        setLoadingBlogs(true)
+        const res = await axios.get("/api/blog/getPublishedBlogs")
+        setPublishedBlogs(res.data)
       } catch (error: any) {
-        toast.error("Failed to fetch blogs")
+        console.log(error.message)
+        toast.error("Failed to fetch published blogs")
+      } finally {
+        setLoadingBlogs(false)
+        nProgress.done() // Stop the progress bar
       }
     }
-    fetchEvents()
+    fetchBlogs()
   }, [])
 
-  useEffect(() => {
-    const isModalOpen = !!addBlog || !!editBlog
+  const filteredBlogs = publishedBlogs.filter(
+    (blog) => selectedTag === "All" || blog.tags.includes(selectedTag),
+  )
 
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = "auto"
-    }
+  const [email, setEmail] = useState<string>("")
+  const [loading, setLoading] = useState<boolean>(false)
 
-    return () => {
-      document.body.style.overflow = "auto"
-    }
-  }, [addBlog, editBlog])
+  const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
 
-  const onDeleteBlog = async (blogId: string) => {
     try {
-      const deletedBlog = await axios.delete("/api/blog/deleteBlog", {
-        data: { id: blogId },
-      })
-      toast.success("Blog deleted successfully")
-      setBlogs((prev) => prev.filter((m) => m.id !== blogId))
+      setLoading(true)
+      const res = await axios.post("/api/subscribe", { email })
+      toast.success(res.data.msg || "Subscribed successfully!")
+      setEmail("")
     } catch (error: any) {
-      console.log(error.message)
-      toast.error("Failed to delete blog")
+      toast.error("Subscription failed. Try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const changeStatus = async (blog: Blog) => {
-    try {
-      setPublishDate(true)
-      const res = await axios.put("/api/blog/updateStatus", {
-        id: blog.id,
-        status: "PUBLISHED",
-        publishedAt: new Date().toISOString(),
-      })
-      const updated = res.data as Blog
-      setBlogs((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
-      toast.success("Blog successfully published")
-    } catch (error: any) {
-      toast.error("Failed to publish blog")
-      console.log(error.message)
-    }
-  }
-
-  const handleAddBlog = async (newBlog: Blog) => {
-    setBlogs((prev) => [...prev, newBlog])
-  }
-
-  const handleEditBlog = async (updatedBlog: Blog) => {
-    setBlogs((prev) =>
-      prev.map((e) => (e.id === updatedBlog.id ? updatedBlog : e)),
-    )
-  }
-
-  const formatCustomDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const day = date.getDate()
-    const monthName = date.toLocaleString("en-US", { month: "long" })
-    const year = date.getFullYear()
-    const getDaySuffix = (d: number) => {
-      if (d >= 11 && d <= 13) return "th"
-      switch (d % 10) {
-        case 1:
-          return "st"
-        case 2:
-          return "nd"
-        case 3:
-          return "rd"
-        default:
-          return "th"
-      }
-    }
-    return `${day}${getDaySuffix(day)} ${monthName}, ${year}`
-  }
+  const SkeletonCard = () => (
+    <div className="flex min-h-[400px] animate-pulse flex-col justify-between overflow-hidden rounded-2xl border border-[#5a3c88] bg-[#2b223d] shadow-md">
+      <div className="h-48 w-full bg-gray-700/50" />
+      <div className="flex flex-1 flex-col justify-between gap-4 p-5">
+        <div className="space-y-2">
+          <div className="h-6 w-3/4 rounded bg-gray-600" />
+          <div className="h-4 w-full rounded bg-gray-600" />
+          <div className="h-4 w-1/2 rounded bg-gray-600" />
+          <div className="mt-3 flex gap-2">
+            <div className="h-4 w-12 rounded-full bg-gray-700" />
+            <div className="h-4 w-16 rounded-full bg-gray-700" />
+          </div>
+        </div>
+        <div className="h-4 w-24 rounded bg-gray-500" />
+      </div>
+    </div>
+  )
 
   const Card: React.FC<{ blog: Blog }> = ({ blog }) => {
     return (
-      <div className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-orange-100 backdrop-blur-md transition-all duration-300 hover:scale-[1.015]">
+      <div className="group flex min-h-[400px] flex-col justify-between overflow-hidden rounded-2xl border border-[#5a3c88] bg-[#2b223d] shadow-md transition-all duration-300 hover:shadow-lg">
         {blog.coverImage && (
           <div className="relative h-48 w-full">
             <Image
               src={blog.coverImage}
-              alt={`${blog.title} image`}
+              alt={`${blog.title} cover image`}
               fill
               className="object-cover"
             />
           </div>
         )}
 
-        <div className="flex flex-col gap-3 px-6 py-5">
-          <h3 className="line-clamp-2 text-lg font-bold text-orange-900">
-            {blog.title}
-          </h3>
-          <p className="line-clamp-3 text-sm text-gray-700">{blog.desc}</p>
+        <div className="flex flex-1 flex-col justify-between gap-3 p-5">
+          <div className="space-y-2">
+            <h3 className="line-clamp-2 text-xl font-bold text-white">
+              {blog.title}
+            </h3>
+            <p className="line-clamp-3 text-sm text-gray-300">{blog.desc}</p>
 
-          <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
-            {blog.tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="rounded-full bg-orange-100 px-2 py-0.5"
-              >
-                #{tag}
-              </span>
-            ))}
+            <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium">
+              {blog.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="rounded-full bg-purple-800/20 px-2 py-0.5 text-purple-200"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
-            {blog.author && <span>👤 {blog.author}</span>}
-            <span>📌 Status: {blog.status}</span>
-            {blog.publishedAt && (
-              <span>📅 {formatCustomDate(blog.publishedAt)}</span>
-            )}
-          </div>
-
-          <div className="mt-4 flex flex-wrap justify-start gap-3">
-            {blog.status === "DRAFT" && (
-              <button
-                onClick={() => changeStatus(blog)}
-                disabled={publishDate}
-                className="rounded-full bg-green-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-green-600"
-              >
-                Publish
-              </button>
-            )}
-            <button
-              onClick={() => setEditBlog(blog)}
-              className="rounded-full bg-blue-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-600"
+          <div className="mt-auto pt-2">
+            <Link
+              href={`/blog/${blog.id}`}
+              className="inline-block text-sm font-semibold text-pink-400 transition-all hover:underline"
             >
-              Edit
-            </button>
-            <button
-              onClick={() => onDeleteBlog(blog.id)}
-              className="rounded-full bg-red-500 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-600"
-            >
-              Delete
-            </button>
+              Read more →
+            </Link>
           </div>
         </div>
       </div>
@@ -188,61 +131,67 @@ export default function BlogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-10 flex flex-col items-center justify-between gap-4 sm:flex-row">
+    <div className="min-h-screen bg-[#141629] px-6 py-12">
+      <div className="mx-auto flex max-w-6xl flex-col items-center">
+        <h2 className="mb-3 animate-fade-in bg-gradient-to-r from-pink-400 via-purple-400 to-blue-500 bg-clip-text text-center text-4xl font-extrabold text-transparent">
+          Our Blogs
+        </h2>
+
+        <p className="mb-8 max-w-2xl animate-fade-in text-center text-gray-300 delay-100">
+          Discover our latest insights and creative explorations in technology,
+          design, and AI
+        </p>
+
+        <form
+          onSubmit={handleSubscribe}
+          className="mb-10 flex w-full max-w-xl animate-fade-in gap-3 delay-200"
+        >
+          <input
+            type="email"
+            placeholder="Enter your email"
+            name="subscribe"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="flex-1 rounded-lg border border-gray-700 bg-white/10 px-4 py-3 text-sm text-white placeholder-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-400"
+          />
           <button
-            onClick={() =>
-              setAddBlog({
-                id: "",
-                title: "",
-                content: "",
-                desc: "",
-                coverImage: "",
-                tags: [],
-                author: "",
-                status: "DRAFT",
-                publishedAt: "",
-              })
-            }
-            className="rounded-lg bg-orange-500 px-6 py-3 text-white shadow-md transition hover:bg-orange-600"
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:brightness-110 disabled:opacity-60"
           >
-            Add Blog
+            Subscribe
           </button>
+        </form>
 
-          <div className="w-full sm:w-1/2">
-            <input
-              type="text"
-              name="search"
-              placeholder="Search by title"
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
-          </div>
+        <div className="mb-10 flex animate-fade-in flex-wrap justify-center gap-3 delay-300">
+          {["All", "AI", "ML", "WebDev", "Data Science"].map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setSelectedTag(tag)}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                selectedTag === tag
+                  ? "border-transparent bg-gradient-to-r from-pink-500 to-indigo-500 text-white shadow-md"
+                  : "border-gray-700 bg-white/10 text-white hover:bg-white/20"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {blogs
-            .filter((e) => e.title.toLowerCase().includes(search.toLowerCase()))
-            .map((blog: Blog) => (
-              <Card key={blog.id} blog={blog} />
-            ))}
+        <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {loadingBlogs
+            ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+            : filteredBlogs.map((blog: Blog) => (
+                <Card key={blog.id} blog={blog} />
+              ))}
         </div>
 
-        {addBlog && (
-          <AddBlogModal
-            blog={addBlog}
-            onClose={() => setAddBlog(null)}
-            onAdd={handleAddBlog}
-          />
-        )}
-
-        {editBlog && (
-          <EditBlogModal
-            blog={editBlog}
-            onClose={() => setEditBlog(null)}
-            onEdit={handleEditBlog}
-          />
+        {filteredBlogs.length === 0 && (
+          <p className="mt-10 text-center text-gray-400">
+            No blogs found for this tag.
+          </p>
         )}
       </div>
     </div>

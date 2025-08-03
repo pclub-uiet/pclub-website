@@ -6,7 +6,7 @@ import axios from "axios"
 import Image from "next/image"
 import EditEventModal from "@/components/ui/EditEventModal"
 import AddEventModal from "@/components/ui/AddEventModal"
-
+import nProgress from "nprogress"
 type Status = "UPCOMING" | "COMPLETED" | "CANCELLED"
 
 interface Event {
@@ -27,17 +27,21 @@ interface Event {
 export default function EventPage() {
   const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
+
   const [addEvent, setAddEvent] = useState<Event | null>(null)
   const [editEvent, setEditEvent] = useState<Event | null>(null)
   const [search, setSearch] = useState("")
 
   useEffect(() => {
     const fetchEvents = async () => {
+      nProgress.start()
       try {
         const res = await axios.get("/api/event/getEvent")
         setEvents(res.data)
       } catch (error: any) {
         toast.error("Failed to fetch events")
+      } finally {
+        nProgress.done()
       }
     }
     fetchEvents()
@@ -106,6 +110,27 @@ export default function EventPage() {
     return `${day}${getDaySuffix(day)} ${monthName}, ${year}`
   }
 
+  const SkeletonCard = () => (
+    <div className="flex animate-pulse flex-col overflow-hidden rounded-3xl border border-orange-200 bg-white shadow-xl ring-1 ring-orange-100 backdrop-blur-md">
+      <div className="h-48 w-full bg-gray-200" />
+      <div className="flex flex-1 flex-col justify-between px-6 py-5">
+        <div className="space-y-2">
+          <div className="h-6 w-3/4 rounded bg-gray-300" />
+          <div className="h-4 w-full rounded bg-gray-300" />
+          <div className="h-4 w-2/3 rounded bg-gray-300" />
+          <div className="mt-3 flex gap-2">
+            <div className="h-4 w-12 rounded-full bg-gray-200" />
+            <div className="h-4 w-16 rounded-full bg-gray-200" />
+          </div>
+        </div>
+        <div className="mt-4 flex gap-4 border-t border-orange-100 pt-4">
+          <div className="h-9 w-20 rounded-full bg-gray-300" />
+          <div className="h-9 w-20 rounded-full bg-gray-300" />
+        </div>
+      </div>
+    </div>
+  )
+
   const Card: React.FC<{ event: Event }> = ({ event }) => {
     const getStatusStyle = (status: Status) => {
       switch (status) {
@@ -116,7 +141,7 @@ export default function EventPage() {
         case "CANCELLED":
           return "bg-red-100 text-red-700"
         default:
-          return "bg-yellow-100 text-yellow-800"
+          return "bg-gray-100 text-gray-700"
       }
     }
 
@@ -133,65 +158,66 @@ export default function EventPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 px-6 py-5 text-gray-800">
-          <h3 className="text-xl font-bold text-orange-900">{event.title}</h3>
-          <p className="line-clamp-3 text-sm text-gray-700">{event.desc}</p>
+        <div className="flex flex-1 flex-col justify-between">
+          <div className="flex flex-col gap-3 px-6 py-5 text-gray-800">
+            <h3 className="text-xl font-bold text-orange-900">{event.title}</h3>
+            <p className="line-clamp-3 text-sm text-gray-700">{event.desc}</p>
 
-          <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
-            {event.eventType.map((type, idx) => (
-              <span
-                key={idx}
-                className="rounded-full bg-orange-100 px-2 py-0.5"
-              >
-                #{type}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-2 flex flex-col gap-1 text-xs font-medium text-gray-600">
-            <div className="flex items-center gap-5">
-              <p>{formatCustomDate(event.date)}</p>
-              <span
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getStatusStyle(event.status)}`}
-              >
-                {event.status}
-              </span>
+            <div className="flex flex-wrap gap-2 text-xs font-medium text-orange-600">
+              {event.eventType.map((type, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-full bg-orange-100 px-2 py-0.5"
+                >
+                  #{type}
+                </span>
+              ))}
             </div>
-            {event.registerLink && (
-              <a
-                href={event.registerLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Register Here
-              </a>
-            )}
-          </div>
-        </div>
 
-        <div className="flex gap-4 border-t border-orange-100 px-6 py-4">
-          <button
-            onClick={() => setEditEvent(event)}
-            className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDeleteEvent(event.id)}
-            className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
-          >
-            Delete
-          </button>
+            <div className="mt-2 flex flex-col gap-1 text-xs font-medium text-gray-600">
+              <div className="flex items-center gap-5">
+                <p>{formatCustomDate(event.date)}</p>
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getStatusStyle(event.status)}`}
+                >
+                  {event.status}
+                </span>
+              </div>
+              {event.registerLink && (
+                <a
+                  href={event.registerLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Register Here
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-auto flex gap-4 border-t border-orange-100 px-6 py-4">
+            <button
+              onClick={() => setEditEvent(event)}
+              className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => onDeleteEvent(event.id)}
+              className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fdf3ef] to-[#e7dbdc] px-6 py-16">
-      <div className="mx-auto max-w-7xl">
-        {/* Top Controls: Add + Search */}
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-rose-100 px-6 py-12">
+      <div className="mx-auto w-full max-w-6xl">
         <div className="mb-10 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <button
             onClick={() =>
@@ -210,7 +236,7 @@ export default function EventPage() {
                 location: "",
               })
             }
-            className="rounded-lg bg-[#ec684a] px-6 py-3 text-white shadow-md transition hover:bg-[#d65732]"
+            className="rounded-lg bg-orange-500 px-6 py-3 text-white shadow-md transition hover:bg-orange-600"
           >
             Add Event
           </button>
