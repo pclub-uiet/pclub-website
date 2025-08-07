@@ -14,7 +14,7 @@ html, body {
 }
 
 #nprogress .bar {
-  background: linear-gradient(to right, #ec4899, #a855f7, #3b82f6);
+  background: orangered;
   position: fixed;
   z-index: 9999;
   top: 0;
